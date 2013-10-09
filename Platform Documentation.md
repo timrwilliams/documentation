@@ -549,24 +549,55 @@ You can use the [Blitz.io] and [New Relic Add-ons] to run synthetic load tests a
 
 **TL;DR:**
 
- * All HTTP requests are routed via the routing tier.
- * `*.cloudcontrolled.com` is round robin across available routing tier nodes.
+ * All HTTP requests are routed via one of our routing tiers based on the `cloudcontrolled.com` and `cloudcontrolapp.com` domains, respectively.
+ * `*.cloudcontrolled.com` subdomains are round robin across available routing tier nodes.
+ * `*.cloudcontrolapp.com` subdomains consetetur sadipscing elitr, sed diam nonumy eirmod.
  * Requests are routed based on the `Host` header.
  * Use the `X-Forwarded-For` header to get the client IP.
 
-All HTTP requests made to apps on the platform are routed via the routing tier. It takes care of routing the request to one of the app's containers based on matching the `Host` header against the list of the deployments aliases.
 
-The routing tier is designed to be robust against single node and even complete datacenter failures while still keeping the added latency as low as possible.
+### Domains
 
-The `*.cloudcontrolled.com` subdomains resolve in a round robin fashion to the current list of routing tier node IP addresses. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none are available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run in one container and therefore only in one availability zone.
+cloudControl provides the possibility of choosing between two different routing tiers for the same application based on the domain utilized. `cloudcontrolled.com` domain belongs to the production and default routing tier, while `cloudcontrolled.com` domain routes requests to a different routing tier, which is in _Beta_ phase. 
+
+All HTTP requests made to apps on the platform are routed via one of these routing tiers. It takes care of routing the request to one of the app's containers based on matching the `Host` header against the list of the deployments aliases.
+
+Both routing tiers are designed to be robust against single node and even complete datacenter failures while still keeping the added latency as low as possible.
+
+### Elastic Addresses
 
 Because of the elastic nature of the routing tier the list of routing tier addresses can change at any time. It is therefore highly discouraged to point custom domains directly to any of the routing tier IP addresses. Please use a CNAME instead. Refer to the [custom domain section](#provided-subdomains-and-custom-domains) for more details on the correct DNS configuration.
 
-If a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to the other available containers of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure set the --containers option to at least 2.
+### Headers
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
 
 ### Remote Address
 
 Because client requests don't hit your app directly, but are forwarded via the routing tier, you can't access the clients IP by reading the remote address. The remote address will always be the internal IP of one of the routing nodes. To make the origin remote address available the routing tier sets the `X-Forwarded-For` header to the original clients IP.
+
+### `*.cloudcontrolled.com` Routing Tier
+
+The `*.cloudcontrolled.com` subdomains resolve in a round robin fashion to the current list of routing tier node IP addresses. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none are available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run in one container and therefore only in one availability zone.
+
+If a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to the other available containers of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure set the --containers option to at least 2.
+
+Timeouts ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+
+Connection limits ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+
+### `*.cloudcontrolapp.com` Routing Tier
+
+The `*.cloudcontrolapp.com` subdomains consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+
+Failover ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+
+Timeouts ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+
+Connection limits ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+
+WebSockets ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+
 
 ## Performance & Caching
 
