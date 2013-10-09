@@ -621,9 +621,11 @@ After you have reduced the total number of requests it's recommended to cache as
 
 #### Caching Proxy
 
-The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct cache control headers for the request. Also ensure, that the request does not include a cookie. Cookies are often used to keep state accross requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies. We recommend having another 'cookieless' domain to be able to cache requests in Varnish for apps that rely on cookies.
+The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` domains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also ensure, that the request does not include a cookie. Cookies are often used to keep state accross requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies.
 
-You can check if a request was cached in Varnish by checking the response's *X-varnish-cache* header. The value HIT means the respons was answered directly from the cache, and MISS means it was not.
+To be able to cache requests in Varnish for apps that rely on cookies we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case you have to register new domain and configure your DNS database with a CNAME record that points the new domain to your `*.cloudcontrolled.com` domain A record. Then you have to update you web application configuration to serve static resources from this new domain.
+
+You can check if a request was cached in Varnish by checking the response's *X-varnish-cache* header. The value HIT means the respons was answered directly from cache, and MISS means it was not.
 
 #### In-Memory Caching
 
@@ -640,6 +642,10 @@ This technique works for URLs as well as for the keys in in-memory caches like `
 Imagine you have cached values in Memcached that you want to keep between deploys and have values in Memcached that you want refreshed for each new version.
 Since Memcached only allows flushing the complete cache you would lose all cached values.
 Including the DEP_VERSION in the key is an easy way to ensure that the cache is clear for new version without flushing.
+
+### Caching in new routing tier (*.cloudocntrolapp.com)
+
+New routing tier does not include caching components, so caching is not available by default. Although it is still possible to provide caching for static assets via cookieless domain as described above.
 
 ## Scheduled Jobs and Background Workers
 
