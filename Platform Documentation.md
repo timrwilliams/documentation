@@ -596,11 +596,12 @@ In case of setting timeouts on the app server level, it might be important to co
 
 #### Websockets
 
+Apart from new failover strategy and updated request timeouts, new routing tier introdcues for the very first time support for WebSockets on cloudControl platform.
+
 WebSocket connections use standard HTTP ports (80 and 443), this is way it is called very often "proxy server and firewall-friendly protocol". In order to establish WebSocket connection on our platform, client has to explicitly set `Upgrade` and `Connection` [hop-by-hop](http://tools.ietf.org/html/rfc2616#section-13.5.1) headers in the request. Those headers instructs reverse-proxy to upgrade the protocol from HTTP to WebSocket. Once protocol upgrade handshake is done, data frames can be sent back and forth between the client and the server in full-duplex mode.
 
 All the request timeouts described above apply also for WebSocket connections but with different effect:
 
-* 20 seconds timeout - ??? (the same as for http ???)
 * 55 seconds read timeout between two consequtive chunks of data being sent to the client
 * 55 seconds send timeout between two consequite chunks of data being sent by the client
 
