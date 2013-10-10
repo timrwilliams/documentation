@@ -550,8 +550,8 @@ You can use the [Blitz.io] and [New Relic Add-ons] to run synthetic load tests a
 **TL;DR:**
 
  * All HTTP requests are routed via one of our routing tiers based on the `cloudcontrolled.com` and `cloudcontrolapp.com` domains, respectively.
- * `*.cloudcontrolled.com` subdomains are round robin across available routing tier nodes.
- * `cloudcontrolapp.com` routing tier introduces containers health checker, specific timeouts and WebSockets support.
+ * `*.cloudcontrolled.com` subdomains are round robin across available the default routing tier nodes.
+ * `cloudcontrolapp.com` routing tier introduces container health checker, specific timeouts and WebSockets support.
  * Requests are routed based on the `Host` header.
  * Use the `X-Forwarded-For` header to get the client IP.
 
@@ -570,7 +570,7 @@ Because of the elastic nature of the routing tier the list of routing tier addre
 
 ### Remote Address
 
-Because client requests don't hit your app directly, but are forwarded via the routing tier, you can't access the clients IP by reading the remote address. The remote address will always be the internal IP of one of the routing nodes. To make the origin remote address available the routing tier sets the `X-Forwarded-For` header to the original clients IP.
+Given that client requests don't hit your app directly, but are forwarded via the routing tier, you can't access the clients IP by reading the remote address. The remote address will always be the internal IP of one of the routing nodes. To make the origin remote address available the routing tier sets the `X-Forwarded-For` header to the original clients IP.
 
 ### cloudcontrolled.com Routing Tier
 
@@ -582,7 +582,7 @@ If a container is not available due to an underlying node failure or a problem w
 
 When using `*.cloudcontrolapp.com` subdomains, requests go through a different routing tier, which provides several improvements compared to the default one. Keep in mind that this routing tier is still on _Beta_ phase, so its functionality and performance may vary in the future, being stable enough for production usage though. 
 
-As for `*.cloudcontrolled.com` subdomains, a round robin strategy is used to distribute requests over the routing tier nodes, which are distributed on three different availability zones. This routing tier includes a container health checker, so those requests will only reach healthy endpoints, avoiding not available or down containers. In this case, when some of the containers is unhealthy, health checker will send requests to them in order to assure that they are up again and ready to receive requests. Thus, you might probably see requests coming from a `cloudControl-HealtCheck` agent to your deployment. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
+As for `*.cloudcontrolled.com` subdomains, a round robin strategy is used to distribute requests over the routing tier nodes, which are distributed on three different availability zones. This routing tier includes a container health checker, so those requests will only reach healthy endpoints, avoiding not available or down containers. In this case, when some of the containers is unhealthy, health checker will send requests to them in order to assure that they are up again and ready to receive requests. Thus, you might probably see requests coming from a `cloudControl-HealthCheck` agent to your deployment. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
 
 In case of setting timeouts on the app server level, it might be important to consider that `cloudcontrolapp.com` routing tier sets timeouts on its own level as it follows:
 
@@ -601,7 +601,7 @@ All the request timeouts described above apply also for WebSocket connections bu
 * 55 seconds read timeout between two consecutive chunks of data being sent to the client
 * 55 seconds send timeout between two consecutive chunks of data being sent by the client
 
-To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connection alive even time gaps between data chunks exceeds defined timeouts.
+To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connection alive even time gaps between data chunks exceeds defined timeouts. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
 
 ## Performance & Caching
 
