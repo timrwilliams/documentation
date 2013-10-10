@@ -558,7 +558,7 @@ You can use the [Blitz.io] and [New Relic Add-ons] to run synthetic load tests a
 
 ### Domains
 
-cloudControl provides the possibility of choosing between two different routing tiers for the same application based on the domain utilized. `cloudcontrolled.com` domain belongs to the production and default routing tier, while `cloudcontrolled.com` domain routes requests to a different routing tier, which is in _Beta_ phase. 
+cloudControl provides the possibility of choosing between two different routing tiers for the same application based on the domain utilized. `cloudcontrolled.com` domain belongs to the production and default routing tier, while `cloudcontrolapp.com` domain routes requests to a different routing tier, which is in _Beta_ phase. 
 
 All HTTP requests made to apps on the platform are routed via one of these routing tiers. It takes care of routing the request to one of the app's containers based on matching the `Host` header against the list of the deployments aliases.
 
@@ -576,25 +576,24 @@ Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod 
 
 Because client requests don't hit your app directly, but are forwarded via the routing tier, you can't access the clients IP by reading the remote address. The remote address will always be the internal IP of one of the routing nodes. To make the origin remote address available the routing tier sets the `X-Forwarded-For` header to the original clients IP.
 
-### `*.cloudcontrolled.com` Routing Tier
+### cloudcontrolled.com Routing Tier
 
 The `*.cloudcontrolled.com` subdomains resolve in a round robin fashion to the current list of routing tier node IP addresses. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none are available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run in one container and therefore only in one availability zone.
 
 If a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to the other available containers of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure set the --containers option to at least 2.
 
-Timeouts ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+### cloudcontrolapp.com Routing Tier
 
-Connection limits ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+When using `*.cloudcontrolapp.com` subdomains, requests go through a different routing tier, which provides several improvements compared to the default one. Keep in mind that this routing tier is still on _Beta_ phase, so its functionality and performance may vary in the future, being stable enough for production usage though. 
 
-### `*.cloudcontrolapp.com` Routing Tier
+As for `*.cloudcontrolled.com` subdomains, a round robin strategy is used to distribute requests over the routing tier nodes, which are distributed on three different availability zones. This routing tier includes a container health checker, so those requests will only reach healthy endpoints, avoiding not available or down containers. In this case, when some of the containers is unhealthy, health checker will send requests to them in order to assure that they are up again and ready to receive requests. Thus, you might probably see requests coming from a `cloudControl-HealtCheck` agent to your deployment. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
 
-The `*.cloudcontrolapp.com` subdomains consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+In case of setting timeouts on the app server level, it might be important to consider that `cloudcontrolapp.com` routing tier sets timeouts on its own level as it follows:
 
-Failover ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+ * 20 seconds timeout for the connection of your container. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made. 
+ * 55 seconds read timeout for the response of the containers. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for entire response, but only between two operations of reading. 
+ * 55 seconds send timeout for the transfer of request to the containers. Timeout is established not on entire transfer of request, but only between two write operations. If after this time the container will not take new data, then routing tier will shutdown the connection. 
 
-Timeouts ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
-
-Connection limits ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
 
 WebSockets ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
 
