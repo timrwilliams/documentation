@@ -610,6 +610,7 @@ To overcome this timeout limitations you have to explicitly implement WebSocket 
  * Reduce the total number of requests that make up a page view.
  * Cache as far away from your database as possible.
  * Try to rely on cache breakers instead of flushing.
+ * Use a cookieless domain for caching static files.
 
 ### Reduce the Number of Requests
 
@@ -621,7 +622,7 @@ After you have reduced the total number of requests it's recommended to cache as
 
 #### Caching Proxy
 
-The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` subdomains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also, endure that the request does not include a cookie. Cookies are often used to keep state across requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies.
+The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` subdomains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also, ensure that the request does not include a cookie. Cookies are often used to keep state across requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies.
 
 To be able to cache requests in Varnish for apps that rely on cookies we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case you have to register new domain and configure your DNS database with a CNAME record that points the new domain to your `*.cloudcontrolled.com` subdomain A record. Then you have to update you web application configuration to serve static resources from this new domain.
 
