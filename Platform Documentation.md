@@ -594,9 +594,17 @@ In case of setting timeouts on the app server level, it might be important to co
  * 55 seconds read timeout for the response of the containers. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for entire response, but only between two operations of reading. 
  * 55 seconds send timeout for the transfer of request to the containers. Timeout is established not on entire transfer of request, but only between two write operations. If after this time the container will not take new data, then routing tier will shutdown the connection. 
 
+#### Websockets
 
-WebSockets ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+WebSocket connections use standard HTTP ports (80 and 443), this is way it is called very often "proxy server and firewall-friendly protocol". In order to establish WebSocket connection on our platform, client has to explicitly set `Upgrade` and `Connection` [hop-by-hop](http://tools.ietf.org/html/rfc2616#section-13.5.1) headers in the request. Those headers instructs reverse-proxy to upgrade the protocol from HTTP to WebSocket. Once protocol upgrade handshake is done, data frames can be sent back and forth between the client and the server in full-duplex mode.
 
+All the request timeouts described above apply also for WebSocket connections but with different effect:
+
+* 20 seconds timeout - ??? (the same as for http ???)
+* 55 seconds read timeout between two consequtive chunks of data being sent to the client
+* 55 seconds send timeout between two consequite chunks of data being sent by the client
+
+To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connetion alive even time gaps between data chunks exceeds defined timeouts.
 
 ## Performance & Caching
 
