@@ -617,19 +617,19 @@ Perceived web application performance is mostly influenced by the frontend. It's
 
 ### Caching Early
 
-After you have reduced the total number of requests it's recommended to cache as far away from your database as possible. Using far future expire headers to avoid that browsers request ressources at all. The next best way of reducing the number of requests that hit your backends is to cache complete responses in the loadbalancer. For this we offer caching directly in the loadbalancing and routing tier.
+After you have reduced the total number of requests it's recommended to cache as far away from your database as possible. Using far future expire headers to avoid that browsers request resources at all. The next best way of reducing the number of requests that hit your backends is to cache complete responses in the loadbalancer. For this we offer caching directly in the loadbalancing and routing tier.
 
 #### Caching Proxy
 
-The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` domains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also ensure, that the request does not include a cookie. Cookies are often used to keep state accross requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies.
+The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` subdomains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also, endure that the request does not include a cookie. Cookies are often used to keep state across requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies.
 
-To be able to cache requests in Varnish for apps that rely on cookies we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case you have to register new domain and configure your DNS database with a CNAME record that points the new domain to your `*.cloudcontrolled.com` domain A record. Then you have to update you web application configuration to serve static resources from this new domain.
+To be able to cache requests in Varnish for apps that rely on cookies we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case you have to register new domain and configure your DNS database with a CNAME record that points the new domain to your `*.cloudcontrolled.com` subdomain A record. Then you have to update you web application configuration to serve static resources from this new domain.
 
-You can check if a request was cached in Varnish by checking the response's *X-varnish-cache* header. The value HIT means the respons was answered directly from cache, and MISS means it was not.
+You can check if a request was cached in Varnish by checking the response's `X-varnish-cache` header. The value HIT means the response was answered directly from cache, and MISS means it was not.
 
 #### In-Memory Caching
 
-To make requests that can't use a cookieless domain faster, you can use in memory caching to store arbitrary data from database query results to complete http responses. Since the cloudControl routing tier distributes requests accross all available containers it is recommended to cache data in a way that the cache is also available for requests that are routed to different containers. A battle tested solution for this is Memcached which is available via the [MemCachier Add-on]. Refer to the [managing Add-ons](#managing-add-ons) section on how to add it. Also the [MemCachier Documentation] has detailed instructions on how to use it for your language and framework of choice.
+To make requests that can't use a cookieless domain faster, you can use in memory caching to store arbitrary data from database query results to complete http responses. Since the cloudControl routing tier distributes requests across all available containers it is recommended to cache data in a way that the cache is also available for requests that are routed to different containers. A battle tested solution for this is Memcached which is available via the [MemCachier Add-on]. Refer to the [managing Add-ons](#managing-add-ons) section on how to add it. Also the [MemCachier Documentation] has detailed instructions on how to use it for your language and framework of choice.
 
 
 ### Cache Breakers
@@ -643,9 +643,9 @@ Imagine you have cached values in Memcached that you want to keep between deploy
 Since Memcached only allows flushing the complete cache you would lose all cached values.
 Including the DEP_VERSION in the key is an easy way to ensure that the cache is clear for new version without flushing.
 
-### Caching in new routing tier (*.cloudocntrolapp.com)
+### Caching in cloudcontrolapp.com routing tier
 
-New routing tier does not include caching components, so caching is not available by default. Although it is still possible to provide caching for static assets via cookieless domain as described above.
+`cloudcontrolapp.com` routing tier does not include caching components, so caching is not available by default. Although it is still possible to provide caching for static assets via cookieless domain as described [above](#caching-proxy).
 
 ## Scheduled Jobs and Background Workers
 
