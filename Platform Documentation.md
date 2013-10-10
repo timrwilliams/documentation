@@ -610,7 +610,7 @@ To overcome this timeout limitations you have to explicitly implement WebSocket 
  * Reduce the total number of requests that make up a page view.
  * Cache as far away from your database as possible.
  * Try to rely on cache breakers instead of flushing.
- * Use a cookieless domain for caching static files.
+ * Use a cookieless domain pointing to your `*.cloudcontrolled.com` subdomain for caching static files.
 
 ### Reduce the Number of Requests
 
