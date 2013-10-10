@@ -551,7 +551,7 @@ You can use the [Blitz.io] and [New Relic Add-ons] to run synthetic load tests a
 
  * All HTTP requests are routed via one of our routing tiers based on the `cloudcontrolled.com` and `cloudcontrolapp.com` domains, respectively.
  * `*.cloudcontrolled.com` subdomains are round robin across available routing tier nodes.
- * `*.cloudcontrolapp.com` subdomains consetetur sadipscing elitr, sed diam nonumy eirmod.
+ * `cloudcontrolapp.com` routing tier introduces containers health checker, specific timeouts and WebSockets support.
  * Requests are routed based on the `Host` header.
  * Use the `X-Forwarded-For` header to get the client IP.
 
@@ -567,10 +567,6 @@ Both routing tiers are designed to be robust against single node and even comple
 ### Elastic Addresses
 
 Because of the elastic nature of the routing tier the list of routing tier addresses can change at any time. It is therefore highly discouraged to point custom domains directly to any of the routing tier IP addresses. Please use a CNAME instead. Refer to the [custom domain section](#provided-subdomains-and-custom-domains) for more details on the correct DNS configuration.
-
-### Headers
-
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
 
 ### Remote Address
 
@@ -596,16 +592,16 @@ In case of setting timeouts on the app server level, it might be important to co
 
 #### Websockets
 
-Apart from new failover strategy and updated request timeouts, new routing tier introdcues for the very first time support for WebSockets on cloudControl platform.
+Apart from new failover strategy and updated request timeouts, `cloudcontrolapp.com` routing tier introduces for the very first time support for WebSockets on cloudControl platform.
 
 WebSocket connections use standard HTTP ports (80 and 443), this is way it is called very often "proxy server and firewall-friendly protocol". In order to establish WebSocket connection on our platform, client has to explicitly set `Upgrade` and `Connection` [hop-by-hop](http://tools.ietf.org/html/rfc2616#section-13.5.1) headers in the request. Those headers instructs reverse-proxy to upgrade the protocol from HTTP to WebSocket. Once protocol upgrade handshake is done, data frames can be sent back and forth between the client and the server in full-duplex mode.
 
 All the request timeouts described above apply also for WebSocket connections but with different effect:
 
-* 55 seconds read timeout between two consequtive chunks of data being sent to the client
-* 55 seconds send timeout between two consequite chunks of data being sent by the client
+* 55 seconds read timeout between two consecutive chunks of data being sent to the client
+* 55 seconds send timeout between two consecutive chunks of data being sent by the client
 
-To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connetion alive even time gaps between data chunks exceeds defined timeouts.
+To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connection alive even time gaps between data chunks exceeds defined timeouts.
 
 ## Performance & Caching
 
