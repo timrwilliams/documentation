@@ -550,8 +550,8 @@ You can use the [Blitz.io] and [New Relic Add-ons] to run synthetic load tests a
 **TL;DR:**
 
  * All HTTP requests are routed via one of our routing tiers based on the `cloudcontrolled.com` and `cloudcontrolapp.com` domains, respectively.
- * `*.cloudcontrolled.com` subdomains are round robin across available the default routing tier nodes.
- * `cloudcontrolapp.com` routing tier introduces container health checker, specific timeouts and WebSockets support.
+ * `cloudcontrolled.com` routing tier provides http caching via Varnish.
+ * `cloudcontrolapp.com` routing tier introduces container health checker, lower timeouts and WebSocket support.
  * Requests are routed based on the `Host` header.
  * Use the `X-Forwarded-For` header to get the client IP.
 
@@ -590,7 +590,7 @@ In case of setting timeouts on the app server level, it might be important to co
  * 55 seconds read timeout for the response of the containers. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for entire response, but only between two operations of reading. 
  * 55 seconds send timeout for the transfer of request to the containers. Timeout is established not on entire transfer of request, but only between two write operations. If after this time the container will not take new data, then routing tier will shutdown the connection. 
 
-#### Websockets
+#### WebSockets
 
 Apart from new failover strategy and updated request timeouts, `cloudcontrolapp.com` routing tier introduces for the very first time support for WebSockets on cloudControl platform.
 
