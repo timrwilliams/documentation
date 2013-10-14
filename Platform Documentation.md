@@ -572,23 +572,47 @@ Because of the elastic nature of the routing tier the list of routing tier addre
 
 Given that client requests don't hit your app directly, but are forwarded via the routing tier, you can't access the clients IP by reading the remote address. The remote address will always be the internal IP of one of the routing nodes. To make the origin remote address available the routing tier sets the `X-Forwarded-For` header to the original clients IP.
 
+### Proxy timeouts
+
+In case of setting timeouts on the app server level, it might be important to consider that our routing tiers set timeouts on its own level as it follows:
+
+ * __Connect timeout__ - timeout for the connection of your container. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made.
+ * __Read timeout__ - timeout for the response of the containers. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for entire response, but only between two operations of reading.
+ * __Send timeout__ - timeout for the transfer of request to the containers. Timeout is established not on entire transfer of request, but only between two write operations. If after this time the container will not take new data, then routing tier will shutdown the connection.
+
+### Requests distribution
+
+Both `*.cloudcontrolled.com` and `*.cloudcontrolapp.com` subdomains resolve in a round robin fashion to the current list of routing tier node IP addresses. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none are available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run in one container and therefore only in one availability zone.
+
 ### cloudcontrolled.com Routing Tier
 
-The `*.cloudcontrolled.com` subdomains resolve in a round robin fashion to the current list of routing tier node IP addresses. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none are available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run in one container and therefore only in one availability zone.
+#### Failover
 
 If a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to the other available containers of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure set the --containers option to at least 2.
 
+#### Timeouts:
+
+|Paremeter|Value [s]|
+|:---------|:----------:|
+|Connect timeout|60|
+|Send timeout|60|
+|Read timeout|600|
+
 ### cloudcontrolapp.com Routing Tier
 
-When using `*.cloudcontrolapp.com` subdomains, requests go through a different routing tier, which provides several improvements compared to the default one. Keep in mind that this routing tier is still on _Beta_ phase, so its functionality and performance may vary in the future, being stable enough for production usage though. 
+When using `*.cloudcontrolapp.com` subdomains, requests go through a different routing tier, which provides several new features. Keep in mind that this routing tier is still on _Beta_ phase, so its functionality and performance may vary in the future, being stable enough for production usage though.
 
-As for `*.cloudcontrolled.com` subdomains, a round robin strategy is used to distribute requests over the routing tier nodes, which are distributed on three different availability zones. This routing tier includes a container health checker, so those requests will only reach healthy endpoints, avoiding not available or down containers. In this case, when some of the containers is unhealthy, health checker will send requests to them in order to assure that they are up again and ready to receive requests. Thus, you might probably see requests to `/CloudHealthChech` coming from a `cloudControl-HealthCheck` agent. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
+#### Active health checks
 
-In case of setting timeouts on the app server level, it might be important to consider that `cloudcontrolapp.com` routing tier sets timeouts on its own level as it follows:
+This routing tier includes a container health checker, so those requests will only reach healthy endpoints, avoiding not available or down containers. In this case, when some of the containers is unhealthy, health checker will send requests to them in order to assure that they are up again and ready to receive requests. Thus, you might probably see requests to `/CloudHealthChech` coming from a `cloudControl-HealthCheck` agent. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
 
- * 20 seconds timeout for the connection of your container. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made. 
- * 55 seconds read timeout for the response of the containers. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for entire response, but only between two operations of reading. 
- * 55 seconds send timeout for the transfer of request to the containers. Timeout is established not on entire transfer of request, but only between two write operations. If after this time the container will not take new data, then routing tier will shutdown the connection. 
+#### Timeouts:
+
+|Paremeter|Value [s]|
+|:---------|:----------:|
+|Connect timeout|20|
+|Send timeout|55|
+|Read timeout|55|
 
 #### WebSockets
 
@@ -598,8 +622,10 @@ WebSocket connections use standard HTTP ports (80 and 443), this is way it is ca
 
 All the request timeouts described above apply also for WebSocket connections but with different effect:
 
-* 55 seconds read timeout between two consecutive chunks of data being sent to the client
-* 55 seconds send timeout between two consecutive chunks of data being sent by the client
+|Paremeter|Value [s]|Description|
+|:---------|:----------:|
+|Send timeout|55|Timeout between two consecutive chunks of data being sent to the client|
+|Read timeout|55|Timeout between two consecutive chunks of data being sent by the client|
 
 To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connection alive even time gaps between data chunks exceeds defined timeouts. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
 
