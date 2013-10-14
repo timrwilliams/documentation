@@ -572,23 +572,24 @@ Because of the elastic nature of the routing tier the list of routing tier addre
 
 Given that client requests don't hit your app directly, but are forwarded via the routing tier, you can't access the clients IP by reading the remote address. The remote address will always be the internal IP of one of the routing nodes. To make the origin remote address available the routing tier sets the `X-Forwarded-For` header to the original clients IP.
 
-### Proxy timeouts
+### Reverse Proxy timeouts
 
-In case of setting timeouts on the app server level, it might be important to consider that our routing tiers set timeouts on its own level as it follows:
+Our routing tiers come with a reverse proxy that accepts and forwards user requests to your application. To do this in an efficient way, we set strict timeouts to the read/ write operations. The values differ a little for the classic and our new routing tier. You can find them bellow. 
 
- * __Connect timeout__ - timeout for the connection of your container. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made.
- * __Read timeout__ - timeout for the response of the containers. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for entire response, but only between two operations of reading.
- * __Send timeout__ - timeout for the transfer of request to the containers. Timeout is established not on entire transfer of request, but only between two write operations. If after this time the container will not take new data, then routing tier will shutdown the connection.
+ * __Connect timeout__ - the time within a connection to your application has to be established. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made already.
+ * __Read timeout__ - time to retrieve a response from your application. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for an entire response, but only between two operations of reading.
+ * __Send timeout__ - maximum time beween two write operations. If your application does not take new data within this time, the routing tier will shutdown the connection.
+
 
 ### Requests distribution
 
-Both `*.cloudcontrolled.com` and `*.cloudcontrolapp.com` subdomains resolve in a round robin fashion to the current list of routing tier node IP addresses. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none are available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run in one container and therefore only in one availability zone.
+Our smart [DNS](https://en.wikipedia.org/wiki/Domain_Name_System) provides a fast and reliable service resolving domain names in a round robin fashion. All nodes are equally distributed to the three different availability zones but can route requests to any container in any other availability zone. To keep latency low, the routing tier tries to route requests to containers in the same availability zone unless none is available. Deployments running on --containers 1 (see the [scaling section](#scaling) for details) only run on one container and therefore are only hosted in one availability zone.
 
 ### cloudcontrolled.com Routing Tier
 
 #### Failover
 
-If a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to the other available containers of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure set the --containers option to at least 2.
+If a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to another available container of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure set the --containers option to at least 2.
 
 #### Timeouts:
 
@@ -600,11 +601,11 @@ If a container is not available due to an underlying node failure or a problem w
 
 ### cloudcontrolapp.com Routing Tier
 
-When using `*.cloudcontrolapp.com` subdomains, requests go through a different routing tier, which provides several new features. Keep in mind that this routing tier is still on _Beta_ phase, so its functionality and performance may vary in the future, being stable enough for production usage though.
+When using `*.cloudcontrolapp.com` subdomains, requests go through a different routing tier, which provides several new features. This routing tier is still in _Beta_ phase, so its functionality and performance may vary in the future, being stable enough for production usage though.
 
 #### Active health checks
 
-This routing tier includes a container health checker, so those requests will only reach healthy endpoints, avoiding not available or down containers. In this case, when some of the containers is unhealthy, health checker will send requests to them in order to assure that they are up again and ready to receive requests. Thus, you might probably see requests to `/CloudHealthChech` coming from a `cloudControl-HealthCheck` agent. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
+This routing tier includes a container health checker. Incoming requests will only be forwarded to healthy instances. When your application is running into timeouts or returning [http error codes](http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5) `501`, `502` or `greater 503`, we will start inspecting the container. Our health checker will send requests to it in order to assure that they are up and ready to receive requests. Thus, you might probably see requests to `/CloudHealthCheck` coming from a `cloudControl-HealthCheck` agent. Only deployments with more than one container running (see the [scaling section](#scaling) for details) will take advantage of this mechanism.
 
 #### Timeouts:
 
@@ -616,29 +617,30 @@ This routing tier includes a container health checker, so those requests will on
 
 #### WebSockets
 
-Apart from new failover strategy and updated request timeouts, `cloudcontrolapp.com` routing tier introduces for the very first time support for WebSockets on cloudControl platform.
+Apart from our new health check strategy and updated request timeouts, the `cloudcontrolapp.com` routing tier now introduces support for WebSockets on cloudControl platform.
 
-WebSocket connections use standard HTTP ports (80 and 443), this is way it is called very often "proxy server and firewall-friendly protocol". In order to establish WebSocket connection on our platform, client has to explicitly set `Upgrade` and `Connection` [hop-by-hop](http://tools.ietf.org/html/rfc2616#section-13.5.1) headers in the request. Those headers instructs reverse-proxy to upgrade the protocol from HTTP to WebSocket. Once protocol upgrade handshake is done, data frames can be sent back and forth between the client and the server in full-duplex mode.
+WebSocket connections use standard HTTP ports (80 and 443) like normal browsers. In order to establish a WebSocket connection on our platform, the client has to explicitly set `Upgrade` and `Connection` [hop-by-hop](http://tools.ietf.org/html/rfc2616#section-13.5.1) headers in the request. Those headers instruct our reverse-proxy to upgrade the protocol from HTTP to WebSocket. Once the protocol upgrade handshake is done, data frames can be sent between the client and the server in full-duplex mode.
 
 All the request timeouts described above apply also for WebSocket connections but with different effect:
 
 |Paremeter|Value [s]|Description|
-|:---------|:----------:|
+|:--------|:--------|:---------:|
 |Send timeout|55|Timeout between two consecutive chunks of data being sent to the client|
 |Read timeout|55|Timeout between two consecutive chunks of data being sent by the client|
 
-To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connection alive even time gaps between data chunks exceeds defined timeouts. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
+
+To overcome any timeout limitations, you can explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connections alive. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
 
 #### Secure Websockets
 
-Conventional WebSockets do not bring any kind of protocol specific authentication or data encryption. You are forced to use standard HTTP authentication mechanisms like cookies, basic/diggest or TLS. The same comes for data encryption where SSL is your obvious choice. While a conventional WebSocket connection is established via HTTP, a protected one uses HTTPS. The distinction is based on the URI schemes:
+Conventional WebSockets do not bring any kind of protocol specific authentication or data encryption. You are encouraged to use standard HTTP authentication mechanisms like cookies, basic/diggest or TLS. The same comes for data encryption where SSL is your obvious choice. While a conventional WebSocket connection is established via HTTP, a protected one uses HTTPS. The distinction is based on the URI schemes:
 
 ~~~
 Normal connection: ws://{host}:{port}/{path to the server}
 Secure connection: wss://{host}:{port}/{path to the server}
 ~~~
 
-Important note is that Secure WebSockets connections can only be established using `*cloudcontrolapp.com` subdomains, not custom ones. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your backend in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
+Please note that Secure WebSockets connections can only be established using `cloudcontrolapp.com` subdomains, not custom ones, yet. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your backend in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
 
 ## Performance & Caching
 
@@ -661,9 +663,9 @@ After you have reduced the total number of requests it's recommended to cache as
 
 The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` subdomains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also, ensure that the request does not include a cookie. Cookies are often used to keep state across requests (e.g. if a user is logged in). To avoid caching responses for logged in users and returning them to other users, Varnish is configured to never cache requests with cookies.
 
-To be able to cache requests in Varnish for apps that rely on cookies we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case you have to register new domain and configure your DNS database with a CNAME record that points the new domain to your `*.cloudcontrolled.com` subdomain A record. Then you have to update you web application configuration to serve static resources from this new domain.
+To be able to cache requests in Varnish for apps that rely on cookies, we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case you have to register a new domain and configure your DNS database with a `CNAME` record that points to your `APP_NAME.cloudcontrolled.com` subdomain `A` record. Then you can update your web application's configuration to serve static resources from your new domain.
 
-You can check if a request was cached in Varnish by checking the response's `X-varnish-cache` header. The value HIT means the response was answered directly from cache, and MISS means it was not.
+You can check if a request was cached in Varnish by checking the response's `X-varnish-cache` header. The value `HIT` means the response was answered directly from cache, and `MISS` means it was not.
 
 #### In-Memory Caching
 
