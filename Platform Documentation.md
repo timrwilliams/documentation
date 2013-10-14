@@ -603,6 +603,17 @@ All the request timeouts described above apply also for WebSocket connections bu
 
 To overcome this timeout limitations you have to explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connection alive even time gaps between data chunks exceeds defined timeouts. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
 
+#### Secure Websockets
+
+Conventional WebSockets do not bring any kind of protocol specific authentication or data encryption. You are forced to use standard HTTP authentication mechanisms like cookies, basic/diggest or TLS. The same comes for data encryption where SSL is your obvious choice. While a conventional WebSocket connection is established via HTTP, a protected one uses HTTPS. The distinction is based on the URI schemes:
+
+~~~
+Normal connection: ws://{host}:{port}/{path to the server}
+Secure connection: wss://{host}:{port}/{path to the server}
+~~~
+
+Important note is that Secure WebSockets connections can only be established using `*cloudcontrolapp.com` subdomains, not custom ones. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your backend in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
+
 ## Performance & Caching
 
 **TL;DR:**
@@ -646,7 +657,7 @@ Including the DEP_VERSION in the key is an easy way to ensure that the cache is 
 
 ### Caching in cloudcontrolapp.com routing tier
 
-`cloudcontrolapp.com` routing tier does not include caching components, so caching is not available by default. Although it is still possible to provide caching for static assets via cookieless domain as described [above](#caching-proxy).
+`cloudcontrolapp.com` routing tier does not include caching components, so caching is not available by default. Although it is still possible to provide caching for static assets via cookieless domain. For this purpose it is enough to use `*.cloudcontrolled.com` subdomain of your deployment. Alternatively you can setup fresh new cookie less subdomain repeating steps described [above](#caching-proxy).
 
 ## Scheduled Jobs and Background Workers
 
