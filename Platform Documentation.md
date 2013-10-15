@@ -578,7 +578,7 @@ Our routing tiers come with a reverse proxy that accepts and forwards user reque
 
  * __Connect timeout__ - the time within a connection to your application has to be established. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made already.
  * __Read timeout__ - time to retrieve a response from your application. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for an entire response, but only between two operations of reading.
- * __Send timeout__ - maximum time beween two write operations. If your application does not take new data within this time, the routing tier will shutdown the connection.
+ * __Send timeout__ - maximum time between two write operations. If your application does not take new data within this time, the routing tier will shutdown the connection.
 
 
 ### Requests distribution
@@ -631,7 +631,7 @@ All the request timeouts described above apply also for WebSocket connections bu
 
 To overcome any timeout limitations, you can explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connections alive. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
 
-#### Secure Websockets
+#### Secure WebSockets
 
 Conventional WebSockets do not bring any kind of protocol specific authentication or data encryption. You are encouraged to use standard HTTP authentication mechanisms like cookies, basic/diggest or TLS. The same comes for data encryption where SSL is your obvious choice. While a conventional WebSocket connection is established via HTTP, a protected one uses HTTPS. The distinction is based on the URI schemes:
 
@@ -640,7 +640,7 @@ Normal connection: ws://{host}:{port}/{path to the server}
 Secure connection: wss://{host}:{port}/{path to the server}
 ~~~
 
-Please note that Secure WebSockets connections can only be established using `cloudcontrolapp.com` subdomains, not custom ones, yet. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your backend in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
+Please note that Secure WebSockets connections can only be established using `cloudcontrolapp.com` subdomains, not custom ones, yet. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your containers in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
 
 ## Performance & Caching
 
@@ -657,7 +657,7 @@ Perceived web application performance is mostly influenced by the frontend. It's
 
 ### Caching Early
 
-After you have reduced the total number of requests it's recommended to cache as far away from your database as possible. Using far future expire headers to avoid that browsers request resources at all. The next best way of reducing the number of requests that hit your backends is to cache complete responses in the loadbalancer. For this we offer caching directly in the loadbalancing and routing tier.
+After you have reduced the total number of requests it's recommended to cache as far away from your database as possible. Using far future expire headers to avoid that browsers request resources at all. The next best way of reducing the number of requests that hit your containers is to cache complete responses in the loadbalancer. For this we offer caching directly in the loadbalancing and routing tier.
 
 #### Caching Proxy
 
