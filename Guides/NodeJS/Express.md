@@ -17,18 +17,17 @@ $ cd dir_name
 npm Ado. `package.info` contents:
 ~~~
 {
-    "dependencies": {
-        "express": "3.4.0",
-        "jade": "*",
-        "mongodb": "1.3.19",
-        "stylus": "*"
-    },
-    "name": "ExpressTut",
-    "private": true,
-    "scripts": {
-        "start": "node app"
-    },
-    "version": "0.0.1"
+  "name": "ExpressTut",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "express": "3.4.0",
+    "jade": "*",
+    "mongodb": "1.3.19"
+  }
 }
 ~~~
 
