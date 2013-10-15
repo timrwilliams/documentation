@@ -597,7 +597,7 @@ If a container is not available due to an underlying node failure or a problem w
 |:---------|:----------:|
 |Connect timeout|60|
 |Send timeout|60|
-|Read timeout|600|
+|Read timeout|120|
 
 ### cloudcontrolapp.com Routing Tier
 
