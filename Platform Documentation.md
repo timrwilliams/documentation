@@ -640,7 +640,7 @@ Normal connection: ws://{host}:{port}/{path to the server}
 Secure connection: wss://{host}:{port}/{path to the server}
 ~~~
 
-Please note that Secure WebSockets connections can only be established using `cloudcontrolapp.com` subdomains, not custom ones, yet. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your containers in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
+Please note that Secure WebSockets connections can only be established using `*.cloudcontrolapp.com` subdomains, not custom ones, yet. Anyway it is highly recommended to use them not only because of data security. Secure WebSockets are 100% proxy transparent, which makes your containers in full control of WebSocket `upgrade handshake` in case some of the proxies do not handle it properly.
 
 ## Performance & Caching
 
