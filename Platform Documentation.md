@@ -578,7 +578,7 @@ Our routing tiers come with a reverse proxy that accepts and forwards user reque
 
  * __Connect timeout__ - the time within a connection to your application has to be established. If your containers are up, but hanging then this timeout will not apply as the connection to the endpoints has been made already.
  * __Read timeout__ - time to retrieve a response from your application. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for an entire response, but only between two operations of reading.
- * __Send timeout__ - maximum time between two write operations. If your application does not take new data within this time, the routing tier will shutdown the connection.
+ * __Send timeout__ - maximum time between two write operations of a request. If your application does not take new data within this time, the routing tier will shutdown the connection.
 
 
 ### Requests distribution
@@ -625,8 +625,8 @@ All the request timeouts described above apply also for WebSocket connections bu
 
 |Paremeter|Value [s]|Description|
 |:--------|:--------|:---------:|
-|Send timeout|55|Timeout between two consecutive chunks of data being sent to the client|
-|Read timeout|55|Timeout between two consecutive chunks of data being sent by the client|
+|Send timeout|55|Timeout between two consecutive chunks of data being sent by the client|
+|Read timeout|55|Timeout between two consecutive chunks of data being sent back to the client|
 
 
 To overcome any timeout limitations, you can explicitly implement WebSocket [Ping-Pong control](http://tools.ietf.org/html/rfc6455#page-36) mechanism which keeps connections alive. Nevertheless, many of the WebSocket libraries or clients implemented in many languages already bring this feature out of the box.
