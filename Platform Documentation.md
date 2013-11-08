@@ -517,10 +517,10 @@ From now on all the new logs should be visible in your custom syslog remote.
 
 **TL;DR:**
 
- * You can select either a `*.cloudcontrolled.com` or `*.cloudcontrolapp.com` subdomain for each deployment.
+ * Each deployment is provided with both a `*.cloudcontrolled.com` and `*.cloudcontrolapp.com` subdomain.
  * Custom domains are supported via the Alias Add-on.
 
-For each deployment, you can select either a `*.cloudcontrolled.com` or `*.cloudcontrolapp.com` subdomain. The `APP_NAME.cloudcontrolled.com` or `APP_NAME.cloudcontrolapp.com` will point to the `default` deployment while any additional deployment can be accessed with a prefixed subdomain: `DEP_NAME-APP_NAME.cloudcontrolled.com` or `DEP_NAME-APP_NAME.cloudcontrolapp.com`.
+Each deployment is provided per default with both a `*.cloudcontrolled.com` and `*.cloudcontrolapp.com` subdomain. The `APP_NAME.cloudcontrolled.com` or `APP_NAME.cloudcontrolapp.com` will point to the `default` deployment while any additional deployment can be accessed with a prefixed subdomain: `DEP_NAME-APP_NAME.cloudcontrolled.com` or `DEP_NAME-APP_NAME.cloudcontrolapp.com`.
 
 You can also use custom domains to access your deployments. To add a domain like `www.example.com`, `app.example.com` or `secure.example.com` to one of your deployments, simply add each one as an alias and add a CNAME for each pointing to your deployment's subdomain. So to point `www.example.com` to the default deployment of the app called *awesomeapp*, add a CNAME for `www.example.com` pointing to `awesomeapp.cloudcontrolled.com` or `awesomeapp.cloudcontrolapp.com`. The [Alias Add-on] also supports mapping wildcard domains like `*.example.com` to one of your deployments.
 
@@ -535,12 +535,12 @@ Changes to DNS can take up to 24 hours until they have effect. Please refer to t
 
  * All HTTP requests are routed via our routing tier. 
  * Within the routing tier, you can choose to route requests via the `cloudcontrolled.com` or `cloudcontrolapp.com` subdomains.
- * The `cloudcontrolled.com` subdomain provides Failover and support for HTTP caching via Varnish.
- * The `cloudcontrolapp.com` subdomain provides container Health Checker and WebSocket support.
+ * The `cloudcontrolled.com` subdomain provides support for HTTP caching via Varnish.
+ * The `cloudcontrolapp.com` subdomain provides WebSocket support.
  * Requests are routed based on the `Host` header.
  * Use the `X-Forwarded-For` header to get the client IP.
 
-All HTTP requests made to apps on the platform are routed via our routing tier. It takes care of routing the request to one of the application's containers based on matching the `Host` header against the list of the deployment's aliases. This is accomplished via the `cloudcontrolled.com` or `cloudcontrolapp.com` subdomains.
+All HTTP requests made to apps on the platform are routed via our routing tier. The routing tier is designed as a cluster of reverse proxy loadbalancers which orchestrate the forwarding of user requests to your applications. It takes care of routing the request to one of the application's containers based on matching the `Host` header against the list of the deployment's aliases. This is accomplished via the `cloudcontrolled.com` or `cloudcontrolapp.com` subdomains.
 
 The routing tier is designed to be robust against single node and even complete datacenter failures while still keeping the added latency as low as possible.
 
@@ -554,7 +554,7 @@ Given that client requests don't hit your application directly, but are forwarde
 
 ### Reverse Proxy timeouts
 
-Our routing tiers come with a reverse proxy that accepts and forwards user requests to your application. To do this in an efficient way, we set strict timeouts to the read/ write operations. The values differ slightly between the `cloudcontrolled.com` and `cloudcontrolapp.com` subdomains. You can find them below. 
+Our routing tier uses a cluster of reverse proxy loadbalancers to manage the acceptance and forwarding of user requests to your applications. To do this in an efficient way, we set strict timeouts to the read/ write operations. The values differ slightly between the `cloudcontrolled.com` and `cloudcontrolapp.com` subdomains. You can find them below. 
 
  * __Connect timeout__ - time within a connection to your application has to be established. If your containers are up, but hanging, then this timeout will not apply as the connection to the endpoints has already been made.
  * __Read timeout__ - time to retrieve a response from your application. It determines how long the routing tier will wait to get the response to a request. The timeout is established not for an entire response, but only between two operations of reading.
@@ -582,15 +582,19 @@ Our smart [DNS](https://en.wikipedia.org/wiki/Domain_Name_System) provides a fas
 
 ### High Availability
 
-The routing tier provides two mechanisms to ensure high availability, depending on the provided subdomain. These are Failover (for the `*.cloudcontrolled.com` subdomain) and (for the `*.cloudcontrolapp.com` subdomain).
+The routing tier provides two mechanisms to ensure high availability, depending on the provided subdomain. These are Failover (for the `*.cloudcontrolled.com` subdomain) and Health Checker (for the `*.cloudcontrolapp.com` subdomain). 
+
+For both subdomains, the routing tier automatically retries failed requests on alternate containers while the platform core starts a replacement for the failed container. Because of this, only deployments with more than one container running (see the [scaling section](#scaling) for details) can take advantage of high availability. Deployments running on --containers 1 will be unavailable for a few minutes while the platform core starts a replacement container. To avoid even short downtimes in the event of a single node or container failure, set the --containers option to at least 2.
 
 #### Failover (for `*.cloudcontrolled.com` subdomain)
 
-For the `*.cloudcontrolled.com` subdomain, if a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically routes requests to another available container of the deployment. Deployments running on --containers 1 will be unavailable for a couple of minutes until a replacement container has been started. To avoid even short downtimes in the event of a single node or container failure, set the --containers option to at least 2.
+For the `*.cloudcontrolled.com` subdomain, if a container is not available due to an underlying node failure or a problem with the code in the container itself, the routing tier automatically retries routing the same request to another available container of the deployment. The platform core will start a replacement for the failed container.
 
 #### Health Checker (for `*.cloudcontrolapp.com` subdomain)
 
-Via the `*.cloudcontrolapp.com` subdomain, incoming requests will only be forwarded to healthy instances. This is actively monitored by our container health checker. If your application is running into timeouts or returning [http error codes](http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5) `501`, `502` or `greater 503`, we will start inspecting the container. Our health checker will send requests to it in order to assure that they are up and ready to receive requests. Because of this, you may see requests to `/CloudHealthCheck` coming from a `cloudControl-HealthCheck` agent. Only deployments with more than one container running (see the [scaling section](#scaling) for details) can take advantage of this mechanism.
+For the `*.cloudcontrolapp.com` subdomain, similar to the `*.cloudcontrolled.com`, the routing tier will automatically retry routing the request to another available container if the initial container was unavailable due to an underlying node failure or a problem with the code in the container itself. Specific to the Health Checker on the `*.cloudcontrolapp.com` subdomain, the routing tier will temporarily remove an "unhealthy" container from recieving requests until the platform core has replaced this container with a healthy one. 
+
+Because the Health Checker actively monitors containers where an application is running into timeouts or returning [http error codes](http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5) `501`, `502` or `greater 503`, you may see requests to `/CloudHealthCheck` coming from a `cloudControl-HealthCheck` agent.
 
 
 ## Scaling
@@ -633,11 +637,11 @@ Perceived web application performance is mostly influenced by the frontend. It's
 
 ### Caching Early
 
-After you have reduced the total number of requests, it's recommended to cache as far away from your database as possible. Using far-future `expires` headers avoids that browsers request resources at all. The next best way of reducing the number of requests that hit your containers is to cache complete responses in the loadbalancer. For this we offer caching directly in the loadbalancing and routing tier.
+After you have reduced the total number of requests, it's recommended to cache as far away from your database as possible. Using far-future `expires` headers avoids that browsers request resources at all. The next best way of reducing the number of requests that hit your containers is to cache complete responses in the loadbalancer. For this we offer caching directly in the routing tier.
 
 #### Caching Proxy
 
-The loadbalancing and routing tier that is in front of all deployments includes a [Varnish] caching proxy. Caching proxy is only available for deployments accessed via `*.cloudcontrolled.com` subdomains. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also, ensure that the request does not include a cookie. Cookies are often used to keep state across requests (e.g. if a user is logged in). To avoid caching responses for logged-in users and returning them to other users, Varnish is configured to never cache requests with cookies.
+The routing tier that is in front of all deployments includes a [Varnish] caching proxy. To use this feature, it is necessary to use the `*.cloudcontrolled.com` subdomain. To have your requests cached directly in Varnish and speed up the response time through this, ensure you have set correct [cache control headers](http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html) (`Cache-Control`, `Expires`, `Age`) for the request. Also, ensure that the request does not include a cookie. Cookies are often used to keep state across requests (e.g. if a user is logged in). To avoid caching responses for logged-in users and returning them to other users, Varnish is configured to never cache requests with cookies.
 
 To be able to cache requests in Varnish for apps that rely on cookies, we recommend using a [cookieless domain](http://www.ravelrumba.com/blog/static-cookieless-domain/). In this case, you have to register a new domain and configure your DNS database with a `CNAME` record that points to your `APP_NAME.cloudcontrolled.com` subdomain `A` record. Then you can update your web application's configuration to serve static resources from your new domain.
 
@@ -659,7 +663,7 @@ Including the DEP_VERSION in the key is an easy way to ensure that the cache is 
 
 ### Caching in cloudcontrolapp.com subdomain
 
-The `*.cloudcontrolapp.com` subdomain does not include caching components, so caching is not available by default. However, it is still possible to provide caching for static assets via cookieless domain. For this purpose, you can simply use the `*.cloudcontrolled.com` subdomain of your deployment. Alternatively, you can set up a fresh new cookieless subdomain repeating the steps described [above](#caching-proxy).
+Requests via the `*.cloudcontrolapp.com` subdomain cannot be cached in the routing tier. However, it is still possible to provide caching for static assets by utilizing a separate cookieless domain as a CNAME of the `*.cloudcontrolled.com`subdomain. For example, you can serve the dynamic requests of your application via www.example.com (a CNAME FOR `exaple.cloudcontrolapp.com`) and serve the static assets like CSS, JS and images via `static.example.com` (a CNAME for `example.cloudcontrolled.com`). 
 
 
 ## WebSockets
