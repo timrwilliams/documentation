@@ -1,18 +1,25 @@
 # Custom Config Add-on
 
-The custom config Add-on allows you to add custom credentials to the standard creds.json file provided for each of your deployments. This allows you to keep code in branches and additional config parameters needed for the deployment seperated from each other.
+The custom config Add-on allows you to add custom credentials to the standard
+creds.json file provided for each of your deployments. This allows you to keep
+code in branches and additional config parameters needed for the deployment
+seperated from each other.
 
-An example for such a parameter could be the Amazon S3 credentials. You would probably want to use different ones for production and development and the custom config Add-on allows you to do this.
+An example for such a parameter could be the Amazon S3 credentials. You would
+probably want to use different ones for production and development and the
+custom config Add-on allows you to do this.
 
 ## Setting Config Parameters
 
-To set config parameters simply append them to the end of the addon.add command.
+To set config parameters simply append them to the end of the addon.add
+command.
 
 ~~~
 $ cctrlapp APP_NAME/DEP_NAME addon.add config.free --PARAMETER_NAME=PARAMETER_VALUE
 ~~~
 
-Replace APP_NAME, DEP_NAME, PARAMETER_NAME and PARAMETER_VALUE with the desired values and they will be added to your deployment's cred.json file.
+Replace APP_NAME, DEP_NAME, PARAMETER_NAME and PARAMETER_VALUE with the desired
+values and they will be added to your deployment's cred.json file.
 
 To set multiple values at once simply append more than one parameter.
 
