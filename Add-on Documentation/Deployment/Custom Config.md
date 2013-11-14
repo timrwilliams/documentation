@@ -30,26 +30,11 @@ $ cctrlapp APP_NAME/DEP_NAME addon.add config.free --PARAM1=VALUE1 --PARAM2=VALU
 Config parameters are accepted in three formats and result in the respective JSON format:
 
 
-<table>
-<tbody>
-    <tr>
-        <td>CLI parameter</td>
-        <td>JSON representation</td>
-    </tr>
-    <tr>
-        <td>--key=value</td>
-        <td>{"key": "value"}</td>
-    </tr>
-    <tr>
-        <td>--key value</td>
-        <td>{"key": "value"}</td>
-    </tr>
-    <tr>
-        <td>--key</td>
-        <td>{"key": true}</td>
-    </tr>
-</tbody>
-</table>
+CLI parameter|JSON representation
+---|--- 
+--key=value|{"key": "value"}
+--key value|{"key": "value"}
+--key|{"key": true}
 
 
 ## Listing Config Parameters
