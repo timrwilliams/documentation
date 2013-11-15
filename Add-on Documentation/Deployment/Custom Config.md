@@ -27,16 +27,19 @@ To set multiple settings at once simply append more than one key/value pairs.
 $ cctrlapp APP_NAME/DEP_NAME config.add KEY1=VALUE1 KEY2=VALUE2 [...]
 ~~~
 
-Config parameters can be set in three ways and result in the respective JSON format:
+Config parameters can be set as in the following table and the are stored in
+JSON format. Multiline arguments can be set using the `\n` escape character.
 
 CLI parameter|JSON representation
 ---|--- 
 key=value|{"key": "value"}
-key value|{"key": "value"}
+key="multiline\nvalue"|{"key": "multiline\nvalue"}
 key|{"key": true}
 
+Note: It is recommended to use double quotes `"` for setting multispace or
+multiline values to make sure they are stored properly.
 
-## Listing Config Parameters
+## Listing Configuration Settings
 
 You can list the existing set of configuration settings by invoking the config
 command:
@@ -52,7 +55,7 @@ $ cctrlapp APP_NAME/DEP_NAME config KEY
 KEY=VALUE
 ~~~
 
-## Updating Config Parameters
+## Updating Configuration Settings
 
 To add or remove settings to your custom config simply use the `add` or
 `remove` option of the config command and append the parameters you need.
