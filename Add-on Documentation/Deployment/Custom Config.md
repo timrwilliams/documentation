@@ -27,6 +27,8 @@ To set multiple settings at once simply append more than one key/value pairs.
 $ cctrlapp APP_NAME/DEP_NAME config.add KEY1=VALUE1 KEY2=VALUE2 [...]
 ~~~
 
+> Fix next paragraph
+
 Config parameters can be set as in the following table and the are stored in
 JSON format. Multiline arguments can be set using the `\n` escape character.
 
@@ -52,7 +54,7 @@ KEY2=VALUE1
 To show the value of a specific key simply append the desired key name:
 ~~~bash
 $ cctrlapp APP_NAME/DEP_NAME config KEY
-KEY=VALUE
+VALUE
 ~~~
 
 ## Updating Configuration Settings
