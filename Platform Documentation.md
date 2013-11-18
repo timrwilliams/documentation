@@ -501,7 +501,7 @@ Where "SERVER_ADDRESS" and "PORT" should be replaced with the concrete values an
 
 Use the name of the file (for example `custom_remote.cfg`) as a value for the "RSYSLOG_REMOTE" config variable:
 ~~~
-$ cctrlapp APP_NAME/DEP_NAME addon.add config.free --RSYSLOG_REMOTE=custom_remote.cfg
+$ cctrlapp APP_NAME/DEP_NAME config.add RSYSLOG_REMOTE=custom_remote.cfg
 ~~~
 
 From now on all the new logs should be visible in your custom syslog remote.
